@@ -50,6 +50,18 @@ source ~/.venvs/aneup/bin/activate
 (or `uv venv ~/.venvs/aneup --python 3.13 --seed` +
 `uv pip install -e . --python ~/.venvs/aneup/bin/python`).
 
+### Secret/PII scanning (gitleaks)
+
+This repo ships `.gitleaks.toml` and tracked hooks in `.githooks/`. After
+cloning, activate them (one repo-local setting; global config untouched):
+
+```sh
+git config core.hooksPath .githooks
+```
+
+Staged content and commit messages are then scanned on every commit;
+gitleaks must be on PATH (`brew install gitleaks`).
+
 ## Usage
 
 ```sh
