@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    # Linux: everything that does not need CoreML prediction.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.13"
+      - run: uv sync --group test
+      - run: uv run pytest -q
+      - run: uv run aneup --help
+      - run: uv run aneup usage
+      - run: uv build
+      - name: dist contents guard
+        run: |
+          tar -tf dist/*.tar.gz | grep -q "src/aneup/models/PiperSR_2x.mlpackage"
+          tar -tf dist/*.tar.gz | grep -q "WEIGHTS-LICENSE.md"
+          if tar -tf dist/*.tar.gz | grep -qE '(^|/)(testdata|corpus)'; then
+            echo "test media leaked into the sdist"; exit 1
+          fi
+          python -m zipfile -l dist/*.whl | grep -q "aneup/models/PiperSR_2x.mlpackage/Manifest.json"
+          if python -m zipfile -l dist/*.whl | grep -qE '(^|/)(testdata|corpus)'; then
+            echo "test media leaked into the wheel"; exit 1
+          fi
+
+  smoke:
+    # macOS: full suite including model inference (CPU fallback on runners).
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.13"
+      - run: uv sync --group test
+      - run: uv run pytest -q

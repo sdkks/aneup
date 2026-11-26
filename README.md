@@ -94,6 +94,21 @@ parts and the parts are kept for inspection. A failed job leaves completed
 parts on disk. The final `hevc` step re-encodes audio as one continuous
 stream, so no chunk seams survive into the delivery file.
 
+## Development & releasing
+
+```sh
+make test           # pytest (model-inference tests need macOS)
+make build          # sdist + wheel into dist/
+make bump-version BUMP=patch   # or VERSION=0.2.0; stamps CHANGELOG, never commits
+make release BUMP=patch        # bump + test + commit + tag vX.Y.Z (never pushes)
+```
+
+The virtualenv defaults to `~/.venvs/aneup` (override: `make test
+UVENV=~/.venvs/other`). Pushing a `vX.Y.Z` tag triggers `.github/workflows/release.yml`:
+version guard → tests (ubuntu + macOS) → build → PyPI publish via
+Trusted Publishing (no tokens). Configure the PyPI project once with
+owner / repository / workflow name `release.yml` / environment `pypi`.
+
 ## Licenses
 
 - Code: MIT (`LICENSE`)

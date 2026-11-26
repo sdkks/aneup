@@ -1,0 +1,71 @@
+name: Release
+
+# Trusted Publishing (OIDC): no API token. The PyPI project form must bind
+# owner / repository / workflow filename (release.yml) / environment (pypi).
+# Cutting a release is local: `make release` bumps, tests, commits and tags;
+# pushing the tag triggers this workflow, which gates publish on tests.
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  id-token: write
+
+jobs:
+  version-guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: tag must match package version
+        run: |
+          pkg=$(sed -n 's/^version = "\(.*\)"/\1/p' pyproject.toml | head -1)
+          if [ "v$pkg" != "${GITHUB_REF_NAME}" ]; then
+            echo "tag ${GITHUB_REF_NAME} != package version v$pkg"; exit 1
+          fi
+
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.13"
+      - run: uv sync --group test
+      - run: uv run pytest -q
+      - run: uv build
+      - name: dist contents guard
+        run: |
+          tar -tf dist/*.tar.gz | grep -q "src/aneup/models/PiperSR_2x.mlpackage"
+          tar -tf dist/*.tar.gz | grep -q "WEIGHTS-LICENSE.md"
+          if tar -tf dist/*.tar.gz | grep -qE '(^|/)(testdata|corpus)'; then
+            echo "test media leaked into the sdist"; exit 1
+          fi
+          python -m zipfile -l dist/*.whl | grep -q "aneup/models/PiperSR_2x.mlpackage/Manifest.json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  smoke:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.13"
+      - run: uv sync --group test
+      - run: uv run pytest -q
+
+  publish:
+    needs: [version-guard, check, smoke]
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
