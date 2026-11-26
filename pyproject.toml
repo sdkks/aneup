@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aneup"
+version = "0.1.0"
+description = "ANE-native 2x/4x video and image upscaler for Apple Silicon, with VideoToolbox HEVC delivery"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10,<3.14"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: MacOS X",
+    "Intended Audience :: End Users/Desktop",
+    "Operating System :: MacOS",
+    "Programming Language :: Python :: 3",
+    "Topic :: Multimedia :: Video",
+    "Topic :: Multimedia :: Graphics",
+]
+dependencies = [
+    "coremltools>=9.0",
+    "numpy",
+    "pillow",
+    "av>=14",
+]
+
+[project.scripts]
+aneup = "aneup.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

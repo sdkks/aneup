@@ -1,0 +1,22 @@
+# macOS AppleDouble junk (exFAT xattr sidecars)
+._*
+.DS_Store
+
+# python
+__pycache__/
+*.pyc
+*.egg-info/
+build/
+dist/
+
+# environments (repo lives on exFAT; real venvs live on APFS)
+.venv/
+
+# local render outputs and test media — never commit these
+out/
+corpus*/
+*.avi
+*.mkv
+
+# large intermediates
+*_part*.mp4
