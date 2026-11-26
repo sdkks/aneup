@@ -25,8 +25,17 @@ dependencies = [
     "av>=14",
 ]
 
+[dependency-groups]
+test = ["pytest>=8"]
+
 [project.scripts]
 aneup = "aneup.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+aneup = ["models/**/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

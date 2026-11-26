@@ -33,7 +33,7 @@ jobs:
 
   smoke:
     # macOS: full suite including model inference (CPU fallback on runners).
-    runs-on: macos-14
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
