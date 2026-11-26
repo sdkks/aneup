@@ -20,7 +20,13 @@ has_ffmpeg = pytest.mark.skipif(shutil.which("ffmpeg") is None, reason="ffmpeg n
 
 
 def run(*args, check=True):
-    return subprocess.run(ANEUP + list(args), check=check, capture_output=True, text=True)
+    p = subprocess.run(ANEUP + list(args), capture_output=True, text=True)
+    if check and p.returncode != 0:
+        raise RuntimeError(
+            f"aneup {' '.join(args)} failed (rc={p.returncode})\n"
+            f"--- stdout ---\n{p.stdout}\n--- stderr ---\n{p.stderr}"
+        )
+    return p
 
 
 def make_clip(path, width=640, height=360, seconds=2):
