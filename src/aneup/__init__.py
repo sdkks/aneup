@@ -5,4 +5,4 @@ delivery encoding. Code: MIT. Bundled model weights: CC BY 4.0,
 attribution required — see WEIGHTS-LICENSE.md.
 """
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"

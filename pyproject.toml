@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "aneup"
-version = "0.1.0"
+version = "0.1.1"
 description = "ANE-native 2x/4x video and image upscaler for Apple Silicon, with VideoToolbox HEVC delivery"
 readme = "README.md"
 license = { text = "MIT" }
