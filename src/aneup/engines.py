@@ -21,8 +21,8 @@ from PIL import Image
 
 import coremltools as ct
 
-_REPO_ROOT = Path(__file__).resolve().parents[2]
-MODELS_DIR = Path(os.environ.get("ANEUP_MODELS_DIR") or (_REPO_ROOT / "models"))
+_PKG_DIR = Path(__file__).resolve().parent
+MODELS_DIR = Path(os.environ.get("ANEUP_MODELS_DIR") or (_PKG_DIR / "models"))
 
 TILE_MODEL = "PiperSR_2x"
 TILE_MODEL_256 = "PiperSR_2x_256"

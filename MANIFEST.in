@@ -1,0 +1,13 @@
+# sdist completeness: models and license ship with the source distribution.
+include WEIGHTS-LICENSE.md
+include LICENSE
+include README.md
+recursive-include src/aneup/models *
+
+# never ship test media, render outputs, or macOS AppleDouble junk
+prune testdata
+prune out
+global-exclude *.mp4 *.avi *.mkv
+global-exclude ._*
+global-exclude .DS_Store
+global-exclude __pycache__ *.pyc
