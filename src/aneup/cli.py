@@ -80,66 +80,95 @@ def _parser():
     sub = ap.add_subparsers(dest="cmd", required=True, metavar="command")
 
     v = sub.add_parser(
-        "video", help="upscale a video 2x/4x (ANE)",
+        "video",
+        help="upscale a video 2x/4x (ANE)",
         description="Upscale a video 2x (or 4x via two chained 2x passes). "
-                    "Output is CFR H.264 (CRF 17) with frame-exact timing; "
-                    "rotation metadata is honoured and the decoder tail is "
-                    "drained so no frames are dropped.",
+        "Output is CFR H.264 (CRF 17) with frame-exact timing; "
+        "rotation metadata is honoured and the decoder tail is "
+        "drained so no frames are dropped.",
         epilog="Examples:\n"
-               "  aneup video -i clip.mp4 --scale 2 --chunk-minutes 4\n"
-               "  aneup video -i clip.mp4 --limit 48   # smoke test",
+        "  aneup video -i clip.mp4 --scale 2 --chunk-minutes 4\n"
+        "  aneup video -i clip.mp4 --limit 48   # smoke test",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     v.add_argument("-i", "--input", required=True, help="input video (any size)")
-    v.add_argument("-o", "--output", default=None,
-                   help="output MP4 (default: <stem>_<scale>x.mp4 next to input)")
-    v.add_argument("--scale", type=int, default=2, choices=(2, 4),
-                   help="upscale factor (default: 2)")
-    v.add_argument("--route", default="auto", choices=("auto", "pad", "tiled"),
-                   help="engine routing (default: auto; see 'aneup usage')")
-    v.add_argument("--chunk-minutes", type=float, default=None,
-                   help="frame-exact chunks of this many minutes, "
-                        "stitched losslessly (recommended for long jobs)")
-    v.add_argument("--limit", type=int, default=None,
-                   help="process only the first N frames (smoke test)")
+    v.add_argument(
+        "-o",
+        "--output",
+        default=None,
+        help="output MP4 (default: <stem>_<scale>x.mp4 next to input)",
+    )
+    v.add_argument(
+        "--scale", type=int, default=2, choices=(2, 4), help="upscale factor (default: 2)"
+    )
+    v.add_argument(
+        "--route",
+        default="auto",
+        choices=("auto", "pad", "tiled"),
+        help="engine routing (default: auto; see 'aneup usage')",
+    )
+    v.add_argument(
+        "--chunk-minutes",
+        type=float,
+        default=None,
+        help="frame-exact chunks of this many minutes, "
+        "stitched losslessly (recommended for long jobs)",
+    )
+    v.add_argument(
+        "--limit", type=int, default=None, help="process only the first N frames (smoke test)"
+    )
 
     im = sub.add_parser(
-        "image", help="upscale a still image 2x/4x (ANE)",
+        "image",
+        help="upscale a still image 2x/4x (ANE)",
         description="Upscale a still image 2x (or 4x via two chained 2x "
-                    "passes). Any input size; large images are tiled.",
+        "passes). Any input size; large images are tiled.",
         epilog="Examples:\n  aneup image -i photo.jpg\n  aneup image -i photo.jpg --scale 4",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     im.add_argument("-i", "--input", required=True, help="input image")
-    im.add_argument("-o", "--output", default=None,
-                    help="output PNG (default: <stem>_<scale>x.png next to input)")
-    im.add_argument("--scale", type=int, default=2, choices=(2, 4),
-                    help="upscale factor (default: 2)")
-    im.add_argument("--route", default="auto", choices=("auto", "pad", "tiled"),
-                    help="engine routing (default: auto; see 'aneup usage')")
+    im.add_argument(
+        "-o",
+        "--output",
+        default=None,
+        help="output PNG (default: <stem>_<scale>x.png next to input)",
+    )
+    im.add_argument(
+        "--scale", type=int, default=2, choices=(2, 4), help="upscale factor (default: 2)"
+    )
+    im.add_argument(
+        "--route",
+        default="auto",
+        choices=("auto", "pad", "tiled"),
+        help="engine routing (default: auto; see 'aneup usage')",
+    )
 
     h = sub.add_parser(
-        "hevc", help="VideoToolbox HEVC delivery encode (10-bit)",
+        "hevc",
+        help="VideoToolbox HEVC delivery encode (10-bit)",
         description="Hardware HEVC delivery encode via macOS VideoToolbox. "
-                    "10-bit main10 at a fixed bitrate target; audio is "
-                    "re-encoded as one continuous AAC stream. Frame parity "
-                    "against the input is verified automatically.",
+        "10-bit main10 at a fixed bitrate target; audio is "
+        "re-encoded as one continuous AAC stream. Frame parity "
+        "against the input is verified automatically.",
         epilog="Examples:\n"
-               "  aneup hevc -i clip_2x.mp4\n"
-               "  aneup hevc -i clip_2x.mp4 -o delivery.mp4\n"
-               "  aneup hevc -i clip_2x.mp4 --bitrate 16M",
+        "  aneup hevc -i clip_2x.mp4\n"
+        "  aneup hevc -i clip_2x.mp4 -o delivery.mp4\n"
+        "  aneup hevc -i clip_2x.mp4 --bitrate 16M",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     h.add_argument("-i", "--input", required=True, help="input video")
-    h.add_argument("-o", "--output", default=None,
-                   help="output MP4 (default: <stem>_hevc.mp4 next to input)")
-    h.add_argument("--bitrate", default="14M",
-                   help="HEVC video bitrate, ffmpeg -b:v syntax (default: 14M)")
+    h.add_argument(
+        "-o", "--output", default=None, help="output MP4 (default: <stem>_hevc.mp4 next to input)"
+    )
+    h.add_argument(
+        "--bitrate", default="14M", help="HEVC video bitrate, ffmpeg -b:v syntax (default: 14M)"
+    )
 
-    u = sub.add_parser(
-        "usage", help="print the full program guide (the overview)",
+    sub.add_parser(
+        "usage",
+        help="print the full program guide (the overview)",
         description="Print the full program guide (the same guide shown at "
-                    "the end of 'aneup --help').",
+        "the end of 'aneup --help').",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     return ap
@@ -154,14 +183,25 @@ def main(argv=None):
         return 0
 
     if args.cmd == "video":
-        out = Path(args.output) if args.output else \
-            Path(args.input).with_name(f"{Path(args.input).stem}_{args.scale}x.mp4")
-        render_video(args.input, out, scale=args.scale, route=args.route,
-                     chunk_seconds=args.chunk_minutes * 60 if args.chunk_minutes else None,
-                     limit=args.limit)
+        out = (
+            Path(args.output)
+            if args.output
+            else Path(args.input).with_name(f"{Path(args.input).stem}_{args.scale}x.mp4")
+        )
+        render_video(
+            args.input,
+            out,
+            scale=args.scale,
+            route=args.route,
+            chunk_seconds=args.chunk_minutes * 60 if args.chunk_minutes else None,
+            limit=args.limit,
+        )
     elif args.cmd == "image":
-        out = Path(args.output) if args.output else \
-            Path(args.input).with_name(f"{Path(args.input).stem}_{args.scale}x.png")
+        out = (
+            Path(args.output)
+            if args.output
+            else Path(args.input).with_name(f"{Path(args.input).stem}_{args.scale}x.png")
+        )
         upscale_image(args.input, out, scale=args.scale, route=args.route)
     elif args.cmd == "hevc":
         hevc_encode(args.input, args.output, bitrate=args.bitrate)

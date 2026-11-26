@@ -29,6 +29,8 @@ def upscale_image(src, dst=None, scale=2, route="auto"):
     if dst:
         dst.parent.mkdir(parents=True, exist_ok=True)
         out_img.save(dst)
-    print(f"  {src.name}: {w}x{h} -> {' -> '.join(f'{dw}x{dh}' for dh, dw in dims)}  "
-          f"route={describe(chain)}  {dt * 1000:.1f} ms")
+    print(
+        f"  {src.name}: {w}x{h} -> {' -> '.join(f'{dw}x{dh}' for dh, dw in dims)}  "
+        f"route={describe(chain)}  {dt * 1000:.1f} ms"
+    )
     return out_img, dt, describe(chain)

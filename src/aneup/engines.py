@@ -16,10 +16,9 @@ Routing picks the first engine that fits; bigger frames cost more tiles.
 import os
 from pathlib import Path
 
+import coremltools as ct
 import numpy as np
 from PIL import Image
-
-import coremltools as ct
 
 _PKG_DIR = Path(__file__).resolve().parent
 MODELS_DIR = Path(os.environ.get("ANEUP_MODELS_DIR") or (_PKG_DIR / "models"))
@@ -30,8 +29,12 @@ FULLFRAME_MODEL = "PiperSR_2x_video_720p"
 
 # (height, width) shapes the full-frame model enumerates in its spec
 FULLFRAME_SHAPES = {
-    (360, 640), (480, 854), (720, 1280),   # landscape
-    (640, 360), (854, 480), (1280, 720),   # portrait
+    (360, 640),
+    (480, 854),
+    (720, 1280),  # landscape
+    (640, 360),
+    (854, 480),
+    (1280, 720),  # portrait
 }
 
 _CACHE = {}
@@ -46,9 +49,7 @@ def load_model(name):
                 f"model {name}.mlpackage not found in {MODELS_DIR}; "
                 "set ANEUP_MODELS_DIR or run from a repo checkout"
             )
-        _CACHE[name] = ct.models.MLModel(
-            str(path), compute_units=ct.ComputeUnit.CPU_AND_NE
-        )
+        _CACHE[name] = ct.models.MLModel(str(path), compute_units=ct.ComputeUnit.CPU_AND_NE)
     return _CACHE[name]
 
 
@@ -88,7 +89,7 @@ class PaddedFullFrame:
         pl, pr = (tw - w) // 2, tw - w - (tw - w) // 2
         out = self._ff(np.pad(rgb, ((pt, pb), (pl, pr), (0, 0)), mode="reflect"))
         H, W = out.shape[:2]
-        return out[pt * 2:H - pb * 2, pl * 2:W - pr * 2]
+        return out[pt * 2 : H - pb * 2, pl * 2 : W - pr * 2]
 
 
 class Tiled:
@@ -132,16 +133,16 @@ class Tiled:
         for j in range(ny):
             for i in range(nx):
                 x0, y0 = i * step, j * step
-                tile = Image.fromarray(canvas[y0:y0 + t, x0:x0 + t])
+                tile = Image.fromarray(canvas[y0 : y0 + t, x0 : x0 + t])
                 r = self.model.predict({self.in_name: tile})[self.out_name]
                 if not isinstance(r, Image.Image):
                     r = Image.fromarray(np.asarray(r))
                 # imageType outputs may come back RGBA; normalise to RGB
                 arr = np.asarray(r.convert("RGB"))
-                out[y0 * s:(y0 + step) * s, x0 * s:(x0 + step) * s] = arr[
-                    m:m + step * s, m:m + step * s
+                out[y0 * s : (y0 + step) * s, x0 * s : (x0 + step) * s] = arr[
+                    m : m + step * s, m : m + step * s
                 ]
-        return out[:h * s, :w * s]
+        return out[: h * s, : w * s]
 
 
 def _pad_shape_for(h, w, max_waste=1.40):
@@ -152,9 +153,13 @@ def _pad_shape_for(h, w, max_waste=1.40):
     for th, tw in FULLFRAME_SHAPES:
         if (th <= tw) != landscape:
             continue
-        if h <= th and w <= tw and (th * tw) / (h * w) <= max_waste:
-            if best is None or th * tw < best[0] * best[1]:
-                best = (th, tw)
+        if (
+            h <= th
+            and w <= tw
+            and (th * tw) / (h * w) <= max_waste
+            and (best is None or th * tw < best[0] * best[1])
+        ):
+            best = (th, tw)
     return best
 
 
@@ -190,7 +195,10 @@ def engine_chain(h, w, scale=2, route="auto"):
 def describe(chain):
     """Human-readable route names for a chain."""
     return "+".join(
-        "full-frame" if isinstance(e, FullFrame)
-        else "pad-fullframe" if isinstance(e, PaddedFullFrame)
-        else "tiled" for e in chain
+        "full-frame"
+        if isinstance(e, FullFrame)
+        else "pad-fullframe"
+        if isinstance(e, PaddedFullFrame)
+        else "tiled"
+        for e in chain
     )

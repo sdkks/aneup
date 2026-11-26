@@ -17,15 +17,32 @@ def hevc_encode(src, dst=None, bitrate="14M", audio="aac", verify_frames=True):
 
     dst None -> <stem>_hevc.mp4 next to src. Audio defaults to one
     continuous AAC re-encode, which also removes any chunk-seam risk."""
-    src, dst = Path(src), Path(dst) if dst else Path(src).with_name(
-        f"{Path(src).stem}_hevc.mp4")
+    src, dst = Path(src), Path(dst) if dst else Path(src).with_name(f"{Path(src).stem}_hevc.mp4")
     dst.parent.mkdir(parents=True, exist_ok=True)
     cmd = [
-        "ffmpeg", "-v", "error", "-y", "-i", str(src),
-        "-c:v", "hevc_videotoolbox", "-b:v", bitrate,
-        "-pix_fmt", "p010le", "-profile:v", "main10", "-tag:v", "hvc1",
-        "-c:a", audio, "-b:a", "192k",
-        "-movflags", "+faststart", str(dst),
+        "ffmpeg",
+        "-v",
+        "error",
+        "-y",
+        "-i",
+        str(src),
+        "-c:v",
+        "hevc_videotoolbox",
+        "-b:v",
+        bitrate,
+        "-pix_fmt",
+        "p010le",
+        "-profile:v",
+        "main10",
+        "-tag:v",
+        "hvc1",
+        "-c:a",
+        audio,
+        "-b:a",
+        "192k",
+        "-movflags",
+        "+faststart",
+        str(dst),
     ]
     t0 = time.time()
     subprocess.run(cmd, check=True)
@@ -39,10 +56,23 @@ def hevc_encode(src, dst=None, bitrate="14M", audio="aac", verify_frames=True):
 def _verify(src, dst):
     def frames(path):
         out = subprocess.run(
-            ["ffprobe", "-v", "error", "-count_frames", "-select_streams", "v:0",
-             "-show_entries", "stream=nb_read_frames", "-of",
-             "default=nokey=1:noprint_wrappers=1", str(path)],
-            check=True, capture_output=True, text=True)
+            [
+                "ffprobe",
+                "-v",
+                "error",
+                "-count_frames",
+                "-select_streams",
+                "v:0",
+                "-show_entries",
+                "stream=nb_read_frames",
+                "-of",
+                "default=nokey=1:noprint_wrappers=1",
+                str(path),
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
         return int(out.stdout.strip())
 
     a, b = frames(src), frames(dst)

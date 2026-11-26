@@ -25,7 +25,7 @@ has_ffmpeg = pytest.mark.skipif(shutil.which("ffmpeg") is None, reason="ffmpeg n
 
 
 def run(*args, check=True):
-    p = subprocess.run(ANEUP + list(args), capture_output=True, text=True)
+    p = subprocess.run(ANEUP + list(args), check=False, capture_output=True, text=True)
     if check and p.returncode != 0:
         raise RuntimeError(
             f"aneup {' '.join(args)} failed (rc={p.returncode})\n"
@@ -36,19 +36,48 @@ def run(*args, check=True):
 
 def make_clip(path, width=640, height=360, seconds=2):
     subprocess.run(
-        ["ffmpeg", "-v", "error", "-y",
-         "-f", "lavfi", "-i", f"testsrc=size={width}x{height}:rate=25:duration={seconds}",
-         "-f", "lavfi", "-i", f"sine=frequency=440:duration={seconds}",
-         "-pix_fmt", "yuv420p", "-shortest", str(path)],
-        check=True, capture_output=True)
+        [
+            "ffmpeg",
+            "-v",
+            "error",
+            "-y",
+            "-f",
+            "lavfi",
+            "-i",
+            f"testsrc=size={width}x{height}:rate=25:duration={seconds}",
+            "-f",
+            "lavfi",
+            "-i",
+            f"sine=frequency=440:duration={seconds}",
+            "-pix_fmt",
+            "yuv420p",
+            "-shortest",
+            str(path),
+        ],
+        check=True,
+        capture_output=True,
+    )
 
 
 def frames(path):
     out = subprocess.run(
-        ["ffprobe", "-v", "error", "-count_frames", "-select_streams", "v:0",
-         "-show_entries", "stream=nb_read_frames", "-of",
-         "default=nokey=1:noprint_wrappers=1", str(path)],
-        check=True, capture_output=True, text=True)
+        [
+            "ffprobe",
+            "-v",
+            "error",
+            "-count_frames",
+            "-select_streams",
+            "v:0",
+            "-show_entries",
+            "stream=nb_read_frames",
+            "-of",
+            "default=nokey=1:noprint_wrappers=1",
+            str(path),
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
     return int(out.stdout.strip())
 
 
@@ -56,14 +85,20 @@ def test_version_consistency():
     pyproject = (REPO / "pyproject.toml").read_text()
     init = (REPO / "src" / "aneup" / "__init__.py").read_text()
     import re
-    pv = re.search(r'^version = "([^"]+)"', pyproject, re.M).group(1)
-    iv = re.search(r'^__version__ = "([^"]+)"', init, re.M).group(1)
+
+    pv = re.search(r'^version = "([^"]+)"', pyproject, re.MULTILINE).group(1)
+    iv = re.search(r'^__version__ = "([^"]+)"', init, re.MULTILINE).group(1)
     assert pv == iv
 
 
 def test_help_paths():
-    for args in (["--help"], ["usage"], ["video", "--help"],
-                 ["image", "--help"], ["hevc", "--help"]):
+    for args in (
+        ["--help"],
+        ["usage"],
+        ["video", "--help"],
+        ["image", "--help"],
+        ["hevc", "--help"],
+    ):
         run(*args)
 
 
@@ -77,12 +112,26 @@ ci_vm = pytest.mark.skipif(
 def test_image_tiled(tmp_path):
     src = tmp_path / "in.png"
     subprocess.run(
-        ["ffmpeg", "-v", "error", "-y", "-f", "lavfi",
-         "-i", "testsrc=size=320x240:rate=25:duration=1", "-frames:v", "1", str(src)],
-        check=True, capture_output=True)
+        [
+            "ffmpeg",
+            "-v",
+            "error",
+            "-y",
+            "-f",
+            "lavfi",
+            "-i",
+            "testsrc=size=320x240:rate=25:duration=1",
+            "-frames:v",
+            "1",
+            str(src),
+        ],
+        check=True,
+        capture_output=True,
+    )
     out = tmp_path / "out.png"
     run("image", "-i", str(src), "-o", str(out))
     from PIL import Image
+
     assert Image.open(out).size == (640, 480)
 
 
@@ -91,12 +140,26 @@ def test_image_tiled(tmp_path):
 def test_image_pad(tmp_path):
     src = tmp_path / "in.png"
     subprocess.run(
-        ["ffmpeg", "-v", "error", "-y", "-f", "lavfi",
-         "-i", "testsrc=size=608x336:rate=25:duration=1", "-frames:v", "1", str(src)],
-        check=True, capture_output=True)
+        [
+            "ffmpeg",
+            "-v",
+            "error",
+            "-y",
+            "-f",
+            "lavfi",
+            "-i",
+            "testsrc=size=608x336:rate=25:duration=1",
+            "-frames:v",
+            "1",
+            str(src),
+        ],
+        check=True,
+        capture_output=True,
+    )
     out = tmp_path / "out.png"
     run("image", "-i", str(src), "-o", str(out))
     from PIL import Image
+
     assert Image.open(out).size == (1216, 672)
 
 

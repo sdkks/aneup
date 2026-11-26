@@ -32,6 +32,7 @@ jobs:
         with:
           python-version: "3.13"
       - run: uv sync --group test
+      - run: uv run --group test pre-commit run --all-files
       - run: uv run pytest -q
       - run: uv build
       - name: dist contents guard

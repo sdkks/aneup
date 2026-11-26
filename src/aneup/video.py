@@ -16,17 +16,18 @@ from pathlib import Path
 import av
 import numpy as np
 
-from .engines import FullFrame, PaddedFullFrame, describe, engine_chain
+from .engines import describe, engine_chain
 
 
 def _rotation_k(frame):
     """np.rot90 quarter-turns reproducing ffmpeg's auto-rotation convention."""
     rot = float(frame.rotation or 0.0)
-    return int(round(rot / 90.0)) % 4
+    return round(rot / 90.0) % 4
 
 
-def render_video(src, dst, scale=2, route="auto", chunk_seconds=None,
-                 limit=None, on_part_done=None):
+def render_video(
+    src, dst, scale=2, route="auto", chunk_seconds=None, limit=None, on_part_done=None
+):
     """Upscale a video 2x (or 4x via chained passes) to an MP4.
 
     With chunk_seconds set, rendering is split into frame-exact parts
@@ -52,16 +53,21 @@ def render_video(src, dst, scale=2, route="auto", chunk_seconds=None,
 
     chain, dims = engine_chain(h, w, scale, route)
     t0 = time.perf_counter()
-    frames_per_chunk = (
-        int(round(chunk_seconds * float(vin.average_rate))) if chunk_seconds else None
-    )
+    frames_per_chunk = round(chunk_seconds * float(vin.average_rate)) if chunk_seconds else None
 
-    st = {"n": 0, "part": 0, "part_start": 0, "audio_offset": 0,
-          "out": None, "vout": None, "aout": None, "pdst": None}
+    st = {
+        "n": 0,
+        "part": 0,
+        "part_start": 0,
+        "audio_offset": 0,
+        "out": None,
+        "vout": None,
+        "aout": None,
+        "pdst": None,
+    }
 
     def open_part():
-        st["pdst"] = (dst.parent / f"{dst.stem}_part{st['part']:03d}.mp4"
-                      if chunk_seconds else dst)
+        st["pdst"] = dst.parent / f"{dst.stem}_part{st['part']:03d}.mp4" if chunk_seconds else dst
         out = av.open(str(st["pdst"]), "w")
         vout = out.add_stream("libx264", rate=vin.average_rate)
         vout.width, vout.height = w * scale, h * scale
@@ -71,8 +77,7 @@ def render_video(src, dst, scale=2, route="auto", chunk_seconds=None,
         aout = None
         if astream is not None:
             aout = out.add_stream_from_template(astream)
-            st["audio_offset"] = int(round(
-                st["n"] / float(vin.average_rate) / float(astream.time_base)))
+            st["audio_offset"] = round(st["n"] / float(vin.average_rate) / float(astream.time_base))
         st.update(out=out, vout=vout, aout=aout, part_start=st["n"])
 
     def close_part():
@@ -114,9 +119,12 @@ def render_video(src, dst, scale=2, route="auto", chunk_seconds=None,
             if limit and st["n"] >= limit:
                 break
         elif st["aout"] is not None:
-            if limit and packet.pts is not None:
-                if packet.pts * astream.time_base > limit / float(vin.average_rate):
-                    continue
+            if (
+                limit
+                and packet.pts is not None
+                and packet.pts * astream.time_base > limit / float(vin.average_rate)
+            ):
+                continue
             if chunk_seconds and packet.pts is not None:
                 t = float(packet.pts * astream.time_base)
                 if t < audio_cut:
@@ -138,8 +146,23 @@ def render_video(src, dst, scale=2, route="auto", chunk_seconds=None,
         list_file = dst.parent / f"{dst.stem}_concat.txt"
         list_file.write_text("".join(f"file '{p.resolve()}'\n" for p in parts))
         subprocess.run(
-            ["ffmpeg", "-v", "error", "-y", "-f", "concat", "-safe", "0",
-             "-i", str(list_file), "-c", "copy", "-movflags", "+faststart", str(dst)],
+            [
+                "ffmpeg",
+                "-v",
+                "error",
+                "-y",
+                "-f",
+                "concat",
+                "-safe",
+                "0",
+                "-i",
+                str(list_file),
+                "-c",
+                "copy",
+                "-movflags",
+                "+faststart",
+                str(dst),
+            ],
             check=True,
         )
         list_file.unlink()
@@ -149,6 +172,8 @@ def render_video(src, dst, scale=2, route="auto", chunk_seconds=None,
 
     dt = time.perf_counter() - t0
     route_name = describe(chain)
-    print(f"  {src.name}: {w}x{h} -> {' -> '.join(f'{dw}x{dh}' for dh, dw in dims)}  "
-          f"route={route_name}  {n} frames in {dt:.1f}s ({n / dt:.1f} fps)")
+    print(
+        f"  {src.name}: {w}x{h} -> {' -> '.join(f'{dw}x{dh}' for dh, dw in dims)}  "
+        f"route={route_name}  {n} frames in {dt:.1f}s ({n / dt:.1f} fps)"
+    )
     return {"frames": n, "seconds": dt, "route": route_name, "dims": dims}

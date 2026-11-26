@@ -141,18 +141,24 @@ version guard, tests on ubuntu and macOS, build, then PyPI publish via
 Trusted Publishing (no tokens). Configure the PyPI project once with
 owner / repository / workflow name `release.yml` / environment `pypi`.
 
-### Secret and PII scanning
+### Hooks and quality gates
 
-This repo ships `.gitleaks.toml` and tracked hooks in `.githooks/`.
-After cloning, activate them (one repo-local setting; global config
+Commits run through the [pre-commit](https://pre-commit.com) framework
+(`pre-commit` CLI required, `brew install pre-commit`). Gates: ruff lint
+and format, a gitleaks staged secret/PII scan, the full test suite, and
+Conventional Commits validation of the message (`type(scope): topic`, 72
+columns max).
+
+After cloning, activate hooks (one repo-local setting; global config
 untouched):
 
 ```sh
 git config core.hooksPath .githooks
 ```
 
-Staged content and commit messages are then scanned on every commit;
-gitleaks must be on PATH (`brew install gitleaks`).
+The `.githooks/` scripts are thin shims into `.pre-commit-config.yaml`,
+so every cloner gets identical gates. Gitleaks degrades to a notice when
+it is not on PATH (`brew install gitleaks`).
 
 ## Licenses
 

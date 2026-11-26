@@ -1,0 +1,30 @@
+# Gates run by the pre-commit framework (https://pre-commit.com).
+# Activate hooks after cloning: git config core.hooksPath .githooks
+# The .githooks/ scripts are thin shims into this config.
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.17.6
+    hooks:
+      - id: ruff
+      - id: ruff-format
+        args: ["--check"]
+
+  - repo: local
+    hooks:
+      - id: conventional-commit-msg
+        name: conventional commit message
+        entry: scripts/hooks/validate_commit_msg.sh
+        language: system
+        stages: [commit-msg]
+
+      - id: gitleaks-staged
+        name: gitleaks staged secret/PII scan
+        entry: scripts/hooks/gitleaks_staged.sh
+        language: system
+        stages: [pre-commit]
+
+      - id: pytest
+        name: pytest (full suite; inference tests skip off-macOS)
+        entry: scripts/hooks/run_tests.sh
+        language: system
+        stages: [pre-commit]
